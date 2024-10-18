@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content="java , python, angular , react , reactjs, angularjs java fullstack , java full stack , .net , .net full stack , python full stack , testing">
+    <title>ByteSplash</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2; /* Background color for the entire body */
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 150px 1fr 1fr 1fr 150px 250px; /* Adjusted for layout */
+            gap: 2px; /* Space between items */
+            align-items: center; /* Vertically align items */
+            padding: 10px;
+            background-color: white; /* Background color for the grid container */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Adds a subtle shadow */
+            border-radius: 5px; /* Rounded corners for the container */
+            margin: 20px; /* Grey margin around the grid container */
+        }
+
+        .grid-item {
+            text-align: center;
+            background-color: transparent; /* Ensure no background color initially */
+            padding: 5px 0; /* Vertical padding for items */
+            margin-right: 5px; /* Right margin */
+            color: rgb(116, 116, 122); /* Initial text color */
+            font-weight: bold; /* Bold text */
+            transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+            cursor: pointer; /* Pointer on hover */
+            display: inline-block; /* Allow items to shrink to text width */
+            min-width: 60px; /* Minimum width for hover area */
+        }
+
+        /* Hover effects for grid items */
+        .grid-item:hover {
+            background-color: blue; /* Background color on hover */
+            color: white; /* Text color on hover */
+            padding: 2px; /* Reduced padding on hover for compactness */
+        }
+
+        /* Image styles */
+        .grid-item img {
+            width: 150px; /* Adjust image size */
+            height: auto;
+            border-radius: 50%; /* Makes the image circular */
+            display: block; /* Ensures image is treated as block for proper alignment */
+            margin: 0 auto; /* Centers the image */
+            padding: 10px; /* Padding around the image */
+        }
+
+        .grid-item-text {
+            white-space: nowrap; /* Keep the text in a single line */
+            padding-top: 5px; /* Add space above the text */
+            display: inline-block; /* Allow text to fit properly */
+            width: 100%; /* Make sure the text takes full width */
+            text-align: center; /* Center the text */
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="grid-container">
+            <div class="grid-item">
+                <img src="C:\Users\harit\Downloads\ByteSplash_Logo.png" alt="Byte Splash">
+                <div class="grid-item-text">Training & Placement Center</div> <!-- Text in a single line -->
+            </div>
+            <div class="grid-item">Home</div>
+            <div class="grid-item">Courses</div>
+            <div class="grid-item">Contacts</div>
+            <div class="grid-item">+91 8660803090</div>
+            <div class="grid-item">enquires@bytesplash.in</div>
+        </div>
+    </header>
+</body>
+
+</html>

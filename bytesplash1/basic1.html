@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Login</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fafafa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 350px;
+            padding: 20px;
+            background: white;
+            border: 1px solid #dbdbdb;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-family:'Roboto',sans-serif;
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #262626;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #dbdbdb;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #0095f6;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #007bbd;
+        }
+
+        .forgot-password {
+            font-size: 14px;
+            color: #0095f6;
+            text-decoration: none;
+            display: block;
+            margin-top: 10px;
+        }
+
+        .signup-prompt {
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .signup-prompt a {
+            color: #0095f6;
+            text-decoration: none;
+        }
+
+        .signup-prompt a:hover {
+            text-decoration: underline;
+        }
+
+        .fb-login-link {
+            margin-top: 15px;
+            color: #0095f6;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fb-icon {
+            width: 20px; /* Adjust size */
+            height: 20px; /* Adjust size */
+            margin-right: 5px; /* Space between icon and text */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instagram</h1>
+        <form>
+            <input type="text" placeholder="Username or email" required>
+            <input type="password" placeholder="Password" required>
+            <button type="submit">Log In</button>
+        </form>
+        <a href="#" class="fb-login-link">
+            <svg class="fb-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#4267B2"><path d="M22.675 0h-21.35C.75 0 0 .75 0 1.675v20.65C0 23.25.75 24 1.675 24h21.35c.925 0 1.675-.75 1.675-1.675V1.675C24 .75 23.25 0 22.675 0zm-3.075 12.7h-2.225v9.3h-3.575v-9.3h-2.375v-3.2h2.375V7.1c0-2.25 1.15-3.5 3.575-3.5.5 0 1.05.05 1.55.1v3.55h-1.55c-1.225 0-1.45.6-1.45 1.5v1.75h2.975l-.475 3.2z"/></svg>
+            Log in with Facebook
+        </a>
+        <a href="#" class="forgot-password">Forgot password?</a>
+        <div class="signup-prompt">
+            Don't have an account? <a href="#">Sign up</a>
+        </div>
+    </div>
+</body>
+</html>
