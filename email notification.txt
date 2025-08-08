@@ -1,0 +1,186 @@
+USE [HRModule]
+GO
+/****** Object:  StoredProcedure [dbo].[Send_Notification_Before_Deadline]    Script Date: 8/8/2025 1:11:15 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[Send_Notification_Before_Deadline]
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @Res_Person NVARCHAR(100), @Email NVARCHAR(255), @ProgramList NVARCHAR(MAX), @MsgBody NVARCHAR(MAX);
+    DECLARE @HTMLBody NVARCHAR(MAX), @ProgramListHTML NVARCHAR(MAX);
+    DECLARE @RecordCount INT = 0;
+    DECLARE @DueDate NVARCHAR(50) = CONVERT(VARCHAR, DATEADD(DAY, 1, GETDATE()), 106); -- Format: DD Mon YYYY
+    
+    PRINT 'Starting procedure at: ' + CONVERT(VARCHAR, GETDATE(), 120);
+    PRINT 'Looking for evaluations due on: ' + CONVERT(VARCHAR, DATEADD(DAY, 1, GETDATE()), 120);
+    
+    -- Temporary table
+    IF OBJECT_ID('tempdb..#NotificationData') IS NOT NULL DROP TABLE #NotificationData;
+    
+    WITH EmployeeStatus AS (
+    SELECT 
+        EAPW.Program_Id,
+        EAPW.EmployeeId,
+        CASE 
+            WHEN TFR.Rev_Id IS NOT NULL THEN 1 ELSE 0 
+        END AS HasReview
+    FROM HRModule.dbo.Emp_Att_Program_Wise EAPW
+    LEFT JOIN HRModule.dbo.Tet_Form_Report_Review TFR
+        ON EAPW.Program_Id = TFR.Program_Id AND EAPW.EmployeeId = TFR.EmployeeId
+    WHERE EAPW.Status = 1
+),
+ProgramCompletion AS (
+    SELECT 
+        Program_Id,
+        COUNT(*) AS TotalEmployees,
+        SUM(HasReview) AS EmployeesCompleted
+    FROM EmployeeStatus
+    GROUP BY Program_Id
+    HAVING COUNT(*) > SUM(HasReview)
+),
+RawData AS (
+    SELECT  
+        EAP.Res_Person,
+        SP.Program_Name,
+        TD.Program_Id,
+        ROW_NUMBER() OVER (PARTITION BY TD.Program_Id, EAP.Res_Person ORDER BY EAP.Res_Person) AS rn
+    FROM TrainingData_Master TD
+    JOIN Standard_Program_Master SP ON SP.Std_Id = TD.Program_Name
+    JOIN Emp_Att_Program_Wise EAP ON TD.Program_Id = EAP.Program_Id
+    JOIN ProgramCompletion PC ON TD.Program_Id = PC.Program_Id
+    WHERE DATEADD(DAY, TD.Evaluation_Period, TD.Training_Date) = CONVERT(DATE, DATEADD(DAY, 1, GETDATE()))
+      AND TD.IsActive = 1
+)
+-- Final Result: One row per Res_Person per Program_Id
+SELECT Res_Person, Program_Name
+INTO #NotificationData
+FROM RawData
+WHERE rn = 1;
+
+    -- Cursor for each responsible person
+    DECLARE ResCursor CURSOR FOR
+    SELECT DISTINCT Res_Person FROM #NotificationData;
+    
+    OPEN ResCursor;
+    FETCH NEXT FROM ResCursor INTO @Res_Person;
+    
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @RecordCount = @RecordCount + 1;
+        PRINT 'Processing: ' + @Res_Person;
+        
+        -- Build HTML program list
+        SELECT @ProgramListHTML = STUFF((
+            SELECT CHAR(10) + 
+                   '<tr>' +
+                   '<td style="padding: 8px; border-bottom: 1px solid #e0e0e0; background-color: #f9f9f9;">' +
+                   '<span style="color: #2c5aa0; font-weight: 500;"> ' + Program_Name + '</span>' +
+                   '</td>' +
+                   '</tr>'
+            FROM #NotificationData
+            WHERE Res_Person = @Res_Person
+            FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)')
+        , 1, 1, '');
+        
+        -- Build complete HTML email body
+        SET @HTMLBody = '
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; }
+        .content { padding: 30px; }
+        .alert-box { background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0; }
+        .program-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .program-table th { background-color: #2c5aa0; color: white; padding: 12px; text-align: left; }
+        .footer { background-color: #f8f9fa; padding: 20px; text-align: center; color: #666; border-top: 1px solid #e0e0e0; }
+        .btn { display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; margin: 15px 0; }
+        .urgent { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="margin: 0; font-size: 24px;"> Training Evaluation Reminder</h1>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">HR Training & Development</p>
+        </div>
+        
+        <div class="content">
+            <div class="alert-box">
+                <h3 style="margin: 0 0 10px 0; color: #856404;"> <span class="urgent">Deadline Tomorrow: ' + @DueDate + '</span></h3>
+                <p style="margin: 0; color: #856404;">Action required for the following training program evaluations.</p>
+            </div>
+            
+            <p>Dear <strong>' + @Res_Person + '</strong>,</p>
+            
+            <p>This is an automated reminder that the evaluation deadline for the following training programs is <strong>tomorrow (' + @DueDate + ')</strong>.</p>
+            
+            <table class="program-table">
+                <thead>
+                    <tr>
+                        <th> Training Programs Requiring Evaluation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ' + @ProgramListHTML + '
+                </tbody>
+            </table>
+            
+            <div style="background-color: #e8f4fd; border-left: 4px solid #2c5aa0; padding: 15px; margin: 20px 0;">
+                <h4 style="margin: 0 0 10px 0; color: #2c5aa0;"> Next Steps:</h4>
+                <ul style="margin: 0; padding-left: 20px;">
+                    <li>Please complete the evaluations before the deadline</li>
+                  
+                    <li>Contact HR if you need assistance or extension</li>
+                </ul>
+            </div>
+            
+            <p><strong>Important:</strong> Timely completion of evaluations is crucial for maintaining training compliance and employee development records.</p>
+            
+            
+        </div>
+        
+        <div class="footer">
+            <p><strong>HR Training & Development Department</strong><br>
+            </p>
+            <p style="font-size: 12px; color: #999; margin-top: 10px;">
+                This is an automated notification. Please do not reply to this email.<br>
+                Generated on: ' + CONVERT(VARCHAR, GETDATE(), 120) + '
+            </p>
+        </div>
+    </div>
+</body>
+</html>';
+
+        SET @Email = @Res_Person + '@gti.nws.cn';
+        
+        BEGIN TRY
+            EXEC msdb.dbo.sp_send_dbmail
+                @profile_name = 'HR-T&D', 
+                @recipients = @Email,
+                @subject = ' URGENT: Training Evaluation Deadline Tomorrow - Action Required',
+                @body = @HTMLBody,
+                @body_format = 'HTML';
+            PRINT 'HTML email sent to: ' + @Email;
+        END TRY
+        BEGIN CATCH
+            PRINT 'Error sending email to ' + @Email + ': ' + ERROR_MESSAGE();
+        END CATCH
+        
+        FETCH NEXT FROM ResCursor INTO @Res_Person;
+    END;
+    
+    CLOSE ResCursor;
+    DEALLOCATE ResCursor;
+    DROP TABLE #NotificationData;
+    
+    PRINT 'Procedure completed. Total responsible persons processed: ' + CAST(@RecordCount AS VARCHAR);
+END
+
+-- EXEC Send_Notification_Before_Deadline
